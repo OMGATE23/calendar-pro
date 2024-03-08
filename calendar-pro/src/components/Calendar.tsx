@@ -1,26 +1,38 @@
 "use client";
 
+import { useDateContext } from "@/context/DateContext";
 import { MONTHS } from "../helpers/constansts";
 
 import { useState } from "react";
 
 export default function Calendar() {
-  let [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  let [displayDate, setDisplayDate] = useState<Date>(new Date());
+  let { state, dispatch } = useDateContext();
+  let displayDate = state.displayDate;
+  let selectedDate = state.selectedDate;
   let days = getDatesInCurrentMonth();
 
   function previousMonthHandler() {
     let newDate = new Date(displayDate);
     newDate.setMonth(displayDate.getMonth() - 1);
 
-    setDisplayDate(newDate);
+    dispatch({
+      type: "DISPLAY_DATE",
+      payload: {
+        displayDate: newDate,
+      },
+    });
   }
 
   function nextMonthHandler() {
     let newDate = new Date(displayDate);
     newDate.setMonth(displayDate.getMonth() + 1);
 
-    setDisplayDate(newDate);
+    dispatch({
+      type: "DISPLAY_DATE",
+      payload: {
+        displayDate: newDate,
+      },
+    });
   }
   function getDatesInCurrentMonth(): Array<Date> {
     const year = displayDate.getFullYear();
@@ -85,7 +97,12 @@ export default function Calendar() {
           <button
             key={date.getTime()}
             onClick={() => {
-              setSelectedDate(date);
+              dispatch({
+                type: "SELECTED_DATE",
+                payload: {
+                  selectedDate: date,
+                },
+              });
             }}
             className={`day ${
               !isSameMonth(date) && "text-gray-400"
