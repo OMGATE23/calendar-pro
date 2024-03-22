@@ -3,8 +3,6 @@
 import { useDateContext } from "@/context/DateContext";
 import { MONTHS } from "../helpers/constansts";
 
-import { useState } from "react";
-
 export default function Calendar() {
   let { state, dispatch } = useDateContext();
   let displayDate = state.displayDate;
@@ -64,7 +62,7 @@ export default function Calendar() {
     return year1 === year2 && month1 === month2 && day1 === day2;
   }
   return (
-    <div className="h-fit w-fit mx-auto flex flex-col items-center gap-2 ">
+    <div className="h-fit w-fit flex flex-col items-center gap-2 ">
       <div className="flex items-center justify-between w-full pl-2">
         <h1
           onClick={() => {
