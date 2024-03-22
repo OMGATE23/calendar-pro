@@ -21,6 +21,29 @@
   align-items: center;
 }
 
+.resizeable {
+  position: absolute;
+  top: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-width: 8px;
+  min-height: 24px;
+}
+
+.resizer {
+  position: absolute;
+}
+
+.resizer-b {
+  cursor: row-resize;
+  height: 5px;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  position: absolute;
+}
+
 @media(max-width : 1080px) {
   .calendar {
     grid-template-columns: repeat(7, 2rem);
