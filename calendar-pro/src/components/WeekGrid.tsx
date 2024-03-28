@@ -1,7 +1,7 @@
 "use client";
 import { useDateContext } from "@/context/DateContext";
 import { useTaskContext } from "@/context/TaskContext";
-import { sameDate } from "@/helpers/timefunctions";
+import { numberToTime, sameDate } from "@/helpers/timefunctions";
 import React, { useState } from "react";
 import TimeBox from "./TimeBox";
 import DayView from "./DayView";
@@ -21,7 +21,6 @@ const WeekGrid = () => {
   });
 
   const { tasksState } = useTaskContext();
-
   function getDisplayWeek(): Date[] {
     const dayOfWeek = dateState.displayDate.getDay();
     const daysInSameWeek = [];
@@ -32,6 +31,7 @@ const WeekGrid = () => {
     for (let i = 0; i < 7; i++) {
       const newDay = new Date(startingDay);
       newDay.setDate(startingDay.getDate() + i);
+      newDay.setHours(6);
       daysInSameWeek.push(newDay);
     }
     return daysInSameWeek;
@@ -55,6 +55,19 @@ const WeekGrid = () => {
   return (
     <>
       <div className="flex items-start min-h-[100dvh] overflow-x-scroll">
+        <div className="w-32 text-xs text-neutral-700">
+          <div className="h-16 py-2 px-1 flex justify-end items-end">
+            GMT + {numberToTime(new Date(Date.now()).getTimezoneOffset())}
+          </div>
+          {Array.from({ length: 24 }).map((_, i) => (
+            <div
+              key={i}
+              className="w-32 h-16 text-right px-1  border-b border-neutral-100"
+            >
+              {numberToTime(i * 60)}
+            </div>
+          ))}
+        </div>
         {displayWeek.map((day) => (
           <DayView
             setCreateTaskData={setCreateTaskData}
