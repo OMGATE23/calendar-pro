@@ -26,9 +26,7 @@ const CreateEventModal = ({
     createTaskData.taskDate.toISOString().split("T")[0]
   );
   const { taskDispatch } = useTaskContext();
-
   const handleStartTimeChange = (value: number) => {
-    console.log("start changed");
     setStartTime(value);
     if (endTime <= value) {
       setEndTime(value + 15);
@@ -36,12 +34,9 @@ const CreateEventModal = ({
   };
 
   const handleEndTimeChange = (value: number) => {
-    console.log("end changed");
     setEndTime(value);
   };
-
   const disabledEndTimeOptions: number[] = [];
-  console.log({ taskDate });
   for (let i = 0; i <= startTime; i += 15) {
     disabledEndTimeOptions.push(i);
   }
@@ -69,6 +64,7 @@ const CreateEventModal = ({
               className="border-b w-full py-2 focus:outline-none border-neutral-400 "
               type="text"
               required
+              autoFocus
               placeholder="Title*"
               onChange={(e) => {
                 setTaskInfo((prev) => {
