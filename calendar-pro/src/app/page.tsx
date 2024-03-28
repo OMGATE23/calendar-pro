@@ -11,7 +11,7 @@ type CreateTaskType = {
 
 export default function Home() {
   return (
-    <main className="relative font-[300] flex items-start p-4 gap-4">
+    <main className="relative font-[300] flex flex-col md:flex-row items-center md:items-start p-4 gap-4">
       <div className="flex flex-col gap-8 justify-center items-center">
         <Calendar />
       </div>
