@@ -82,7 +82,7 @@ const TaskDisplay = ({ task }: { task: StructuredTaskType }) => {
         onMouseMove={(event) => {
           if (mouseMoving) {
             const dy = event.clientY - prevClientY;
-            setTop(task.startTime + dy);
+            setTop(Math.max(task.startTime + dy, 0));
 
             if (refDrag.current) {
               const component = refDrag.current.getBoundingClientRect();
@@ -137,14 +137,14 @@ const TaskDisplay = ({ task }: { task: StructuredTaskType }) => {
         id="content"
         className="text-xs p-1 outline outline-1 outline-blue-800 relative rounded-md h-full w-full bg-blue-400  shadow-xl text-white"
       >
-        <div className="overflow-hidden h-full">
+        <div className="overflow-hidden select-none h-full">
           <p className="text-clip">{task.title}</p>
           <p className="text-clip">
             {numberToTime(task.startTime)} - {numberToTime(task.endTime)}
           </p>
         </div>
         {mouseMoving && (
-          <div className="h-[100vh] w-[300%] translate-y-[-50%] translate-x-[-33%] absolute top-0 left-0 outline outline-1"></div>
+          <div className="h-[100vh] w-[300%] translate-y-[-50%] translate-x-[-33%] absolute top-0 left-0"></div>
         )}
       </div>
       <div

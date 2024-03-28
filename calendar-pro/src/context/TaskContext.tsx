@@ -147,37 +147,18 @@ const TaskContextProvider = ({ children }: { children: ReactNode }) => {
         if (endTime <= startTime) {
           updatedTask.endTime = updatedTask.startTime + 15;
         }
+        let timeDiff = endTime - startTime;
+        if (updatedTask.endTime > 1440) {
+          updatedTask.endTime = 1440;
+          updatedTask.startTime = 1440 - timeDiff;
+        }
+
         newTasks.set(id, { ...updatedTask });
         return {
           ...state,
           tasks: newTasks,
         };
       }
-      // case "UPDATE_DATE": {
-      //   const { id, newDate } = action.payload;
-      //   const newTasks = new Map(state.tasks);
-      //   let updatedTask = newTasks.get(id);
-      //   if (!updatedTask) {
-      //     return state;
-      //   }
-      //   let dateString = formatDate(newDate);
-      //   let newTasksByDate = new Map(state.tasksByDate);
-      //   newTasks.delete(id);
-      //   newTasks.set(id, { ...updatedTask, date: newDate });
-      //   newTasksByDate.set(formatDate(updatedTask.date), [
-      //     ...(newTasksByDate.get(formatDate(updatedTask.date)) || []).filter(
-      //       (taskId) => taskId !== id
-      //     ),
-      //   ]);
-      //   newTasksByDate.set(dateString, [
-      //     ...(newTasksByDate.get(dateString) || []),
-      //     id,
-      //   ]);
-      //   return {
-      //     tasks: newTasks,
-      //     tasksByDate: newTasksByDate,
-      //   };
-      // }
       case "UPDATE_DATE": {
         const { id, newDate, oldDate, top } = action.payload;
 
@@ -200,11 +181,15 @@ const TaskContextProvider = ({ children }: { children: ReactNode }) => {
           newTasksByDate.set(oldDateKey, updatedOldDateTasks);
         }
         let timeDiff = taskToUpdate.endTime - taskToUpdate.startTime;
-        let newStart = (top * 15) / 16;
 
         taskToUpdate.date = newDate;
         taskToUpdate.startTime = Math.ceil(top / 16) * 15;
         taskToUpdate.endTime = taskToUpdate.startTime + timeDiff;
+
+        if (taskToUpdate.endTime > 1440) {
+          taskToUpdate.endTime = 1440;
+          taskToUpdate.startTime = 1440 - timeDiff;
+        }
         const newDateKey = formatDate(newDate);
         const newDateTasks = newTasksByDate.get(newDateKey) || [];
         newTasksByDate.set(newDateKey, [...newDateTasks, id]);
