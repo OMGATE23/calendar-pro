@@ -94,7 +94,7 @@ const DayView = ({
         }}
         className={`${
           sameDate(day, dateState.selectedDate) && "bg-neutral-950 text-white"
-        } w-full px-4 py-1 h-16 rounded-md flex flex-col items-center justify-center text-center`}
+        } w-full select-none px-4 py-1 h-16 rounded-md flex flex-col items-center justify-center text-center`}
       >
         {day.getDate()}
         <span>{MONTHS[day.getMonth()]}</span>
