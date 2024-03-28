@@ -1,4 +1,5 @@
 "use client";
+import { dateFromFormatDate, formatDate } from "@/helpers/timefunctions";
 import React, { ReactNode, createContext, useContext, useReducer } from "react";
 
 export type Task = {
@@ -44,6 +45,15 @@ export type Action =
         startTime: number;
         endTime: number;
       };
+    }
+  | {
+      type: "UPDATE_DATE";
+      payload: {
+        id: string;
+        newDate: Date;
+        oldDate: Date;
+        top: number;
+      };
     };
 
 export const TaskContext = createContext<TaskContextType>({
@@ -68,7 +78,6 @@ const TaskContextProvider = ({ children }: { children: ReactNode }) => {
       case "ADD_TASK": {
         const { payload: task } = action;
         const { date } = task;
-
         const dateString = date
           .toLocaleDateString("en-GB", {
             day: "2-digit",
@@ -132,14 +141,78 @@ const TaskContextProvider = ({ children }: { children: ReactNode }) => {
         if (!updatedTask) {
           return state;
         }
-
         updatedTask.startTime = startTime;
         updatedTask.endTime = endTime;
-        newTasks.set(id, updatedTask);
 
+        if (endTime <= startTime) {
+          updatedTask.endTime = updatedTask.startTime + 15;
+        }
+        newTasks.set(id, { ...updatedTask });
         return {
           ...state,
           tasks: newTasks,
+        };
+      }
+      // case "UPDATE_DATE": {
+      //   const { id, newDate } = action.payload;
+      //   const newTasks = new Map(state.tasks);
+      //   let updatedTask = newTasks.get(id);
+      //   if (!updatedTask) {
+      //     return state;
+      //   }
+      //   let dateString = formatDate(newDate);
+      //   let newTasksByDate = new Map(state.tasksByDate);
+      //   newTasks.delete(id);
+      //   newTasks.set(id, { ...updatedTask, date: newDate });
+      //   newTasksByDate.set(formatDate(updatedTask.date), [
+      //     ...(newTasksByDate.get(formatDate(updatedTask.date)) || []).filter(
+      //       (taskId) => taskId !== id
+      //     ),
+      //   ]);
+      //   newTasksByDate.set(dateString, [
+      //     ...(newTasksByDate.get(dateString) || []),
+      //     id,
+      //   ]);
+      //   return {
+      //     tasks: newTasks,
+      //     tasksByDate: newTasksByDate,
+      //   };
+      // }
+      case "UPDATE_DATE": {
+        const { id, newDate, oldDate, top } = action.payload;
+
+        const newTasks = new Map(state.tasks);
+        const newTasksByDate = new Map(state.tasksByDate);
+
+        const taskToUpdate = newTasks.get(id);
+        if (!taskToUpdate) {
+          return state;
+        }
+
+        const oldDateKey = formatDate(oldDate);
+        const oldDateTasks = newTasksByDate.get(oldDateKey) || [];
+        const updatedOldDateTasks = oldDateTasks.filter(
+          (taskId) => taskId !== id
+        );
+        if (updatedOldDateTasks.length === 0) {
+          newTasksByDate.delete(oldDateKey);
+        } else {
+          newTasksByDate.set(oldDateKey, updatedOldDateTasks);
+        }
+        let timeDiff = taskToUpdate.endTime - taskToUpdate.startTime;
+        let newStart = (top * 15) / 16;
+
+        taskToUpdate.date = newDate;
+        taskToUpdate.startTime = Math.ceil(top / 16) * 15;
+        taskToUpdate.endTime = taskToUpdate.startTime + timeDiff;
+        const newDateKey = formatDate(newDate);
+        const newDateTasks = newTasksByDate.get(newDateKey) || [];
+        newTasksByDate.set(newDateKey, [...newDateTasks, id]);
+        newTasks.set(id, taskToUpdate);
+
+        return {
+          tasks: newTasks,
+          tasksByDate: newTasksByDate,
         };
       }
 
