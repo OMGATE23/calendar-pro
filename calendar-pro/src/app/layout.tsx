@@ -18,6 +18,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <title>CalendarPro</title>
+      </head>
       <DateContextProvider>
         <TaskContextProvider>
           <body className={inter.className}>{children}</body>
