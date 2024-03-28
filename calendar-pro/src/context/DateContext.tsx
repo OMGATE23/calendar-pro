@@ -21,7 +21,7 @@ export type Action = {
     displayDate?: Date;
   };
 };
-export const DateContext = createContext<DateContext>({
+const DateContext = createContext<DateContext>({
   state: {
     selectedDate: new Date(),
     displayDate: new Date(),
