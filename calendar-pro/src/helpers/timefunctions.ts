@@ -96,3 +96,17 @@ export function formatDate(date: Date) {
 
   return `${day}${month}${year}`;
 }
+
+export function dateFromFormatDate(dateString: string) {
+  const day = parseInt(dateString.substring(0, 2), 10);
+  const month = parseInt(dateString.substring(2, 4), 10) - 1;
+  const year = parseInt(dateString.substring(4, 8), 10);
+
+  return new Date(year, month, day);
+}
+
+export function numberToTime(time: number) {
+  return `${String(Math.floor(Math.abs(time) / 60)).padStart(2, "0")}:${String(
+    Math.abs(time) % 60
+  ).padStart(2, "0")}`;
+}
