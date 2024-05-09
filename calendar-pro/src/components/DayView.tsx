@@ -22,8 +22,10 @@ const DayView = ({
   timeIntervals,
   setCreateTaskData,
   setShowCreateTask,
+  dayNumber,
 }: {
   day: Date;
+  dayNumber: number;
   setCreateTaskData: React.Dispatch<React.SetStateAction<CreateTaskType>>;
   setShowCreateTask: React.Dispatch<React.SetStateAction<boolean>>;
   timeIntervals: {
@@ -35,6 +37,7 @@ const DayView = ({
   const { tasksState } = useTaskContext();
   const [displayTasks, setDisplayTasks] = useState<StructuredTaskType[]>([]);
   const { tasks, tasksByDate } = tasksState;
+
   function getFormatedTasks() {
     const today = formatDate(day);
     let todaysTasks = tasksByDate.get(today) || [];
@@ -44,8 +47,7 @@ const DayView = ({
     }
     let sortedTasks = (todaysTasks.filter(Boolean) as string[])
       .map((eventId) => tasks.get(eventId) as Task)
-      .sort((a, b) => a.startTime - b.endTime);
-
+      .sort((a, b) => a.startTime - b.startTime);
     let solution = [];
     for (let task of sortedTasks) {
       let taskScheduled = false;
@@ -111,7 +113,9 @@ const DayView = ({
         ))}
 
         {displayTasks.length > 0 &&
-          displayTasks.map((task) => <TaskDisplay key={task.id} task={task} />)}
+          displayTasks.map((task) => (
+            <TaskDisplay dayNumber={dayNumber} key={task.id} task={task} />
+          ))}
       </div>
     </div>
   );
