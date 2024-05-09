@@ -20,7 +20,6 @@ const WeekGrid = () => {
     taskDate: dateState.selectedDate,
   });
 
-  const { tasksState } = useTaskContext();
   function getDisplayWeek(): Date[] {
     const dayOfWeek = dateState.displayDate.getDay();
     const daysInSameWeek = [];
@@ -68,13 +67,14 @@ const WeekGrid = () => {
             </div>
           ))}
         </div>
-        {displayWeek.map((day) => (
+        {displayWeek.map((day, index) => (
           <DayView
             setCreateTaskData={setCreateTaskData}
             setShowCreateTask={setShowCreateTask}
             key={day.getTime()}
             day={day}
             timeIntervals={timeIntervals}
+            dayNumber={index}
           />
         ))}
       </div>

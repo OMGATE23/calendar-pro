@@ -21,9 +21,6 @@ const TimeBox = ({
     <>
       <div
         data-type="timebox"
-        data-date={day.getDate()}
-        data-month={day.getMonth() + 1}
-        data-year={day.getFullYear()}
         onClick={(e) => {
           const nativeElement = e.nativeEvent.target as HTMLElement;
           if (nativeElement.getAttribute("data-type") !== "timebox") {
@@ -35,7 +32,7 @@ const TimeBox = ({
           });
           setShowCreateTask(true);
         }}
-        className={`h-4 timebox ${
+        className={`h-4  timebox ${
           timeInterval.end % 60 === 0 && "border-b-[1px] border-neutral-100 "
         } relative`}
       ></div>

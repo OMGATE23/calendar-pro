@@ -52,7 +52,8 @@ export type Action =
         id: string;
         newDate: Date;
         oldDate: Date;
-        top: number;
+        startTime: number;
+        endTime: number;
       };
     };
 
@@ -160,7 +161,7 @@ const TaskContextProvider = ({ children }: { children: ReactNode }) => {
         };
       }
       case "UPDATE_DATE": {
-        const { id, newDate, oldDate, top } = action.payload;
+        const { id, newDate, oldDate, startTime, endTime } = action.payload;
 
         const newTasks = new Map(state.tasks);
         const newTasksByDate = new Map(state.tasksByDate);
@@ -180,15 +181,14 @@ const TaskContextProvider = ({ children }: { children: ReactNode }) => {
         } else {
           newTasksByDate.set(oldDateKey, updatedOldDateTasks);
         }
-        let timeDiff = taskToUpdate.endTime - taskToUpdate.startTime;
 
         taskToUpdate.date = newDate;
-        taskToUpdate.startTime = Math.ceil(top / 16) * 15;
-        taskToUpdate.endTime = taskToUpdate.startTime + timeDiff;
+        taskToUpdate.startTime = startTime;
+        taskToUpdate.endTime = endTime;
 
         if (taskToUpdate.endTime > 1440) {
           taskToUpdate.endTime = 1440;
-          taskToUpdate.startTime = 1440 - timeDiff;
+          taskToUpdate.startTime = 1440 - (startTime - endTime);
         }
         const newDateKey = formatDate(newDate);
         const newDateTasks = newTasksByDate.get(newDateKey) || [];
