@@ -1,14 +1,15 @@
-import { Task, useTaskContext } from "@/context/TaskContext";
+import { useTaskContext } from "@/context/TaskContext";
 import { useEffect, useRef, useState } from "react";
 import { StructuredTaskType } from "./DayView";
-import throttle, { formatDate, numberToTime } from "@/helpers/timefunctions";
+import { numberToTime } from "@/helpers/timefunctions";
 
-type TimeType = {
-  start: number;
-  end: number;
-};
-const TaskDisplay = ({ task }: { task: StructuredTaskType }) => {
-  const refBottom = useRef<HTMLDivElement | null>(null);
+const TaskDisplay = ({
+  task,
+  dayNumber,
+}: {
+  task: StructuredTaskType;
+  dayNumber: number;
+}) => {
   const refDrag = useRef<HTMLDivElement | null>(null);
   const ref = useRef<HTMLDivElement | null>(null);
   const [top, setTop] = useState(task.startTime);
@@ -17,8 +18,10 @@ const TaskDisplay = ({ task }: { task: StructuredTaskType }) => {
   const [sliderY, setSliderY] = useState(0);
   const [addedHeight, setAddedHeight] = useState(0);
   const [sliderMoving, setSliderMoving] = useState(false);
-  const { tasksState, taskDispatch } = useTaskContext();
+  const { taskDispatch } = useTaskContext();
+  const [leftOffset, setLeftOffset] = useState(0);
   const [left, setLeft] = useState(0);
+  const [mouseUp, setMouseUp] = useState(false);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -43,7 +46,7 @@ const TaskDisplay = ({ task }: { task: StructuredTaskType }) => {
       id={task.id}
       key={task.id}
       ref={ref}
-      className={`resizeable shadow-md  rounded-md`}
+      className="task-animation resizeable shadow-md  rounded-md"
       style={{
         position: "absolute",
         top: top * (16 / 15) + "px",
@@ -52,12 +55,13 @@ const TaskDisplay = ({ task }: { task: StructuredTaskType }) => {
         }px`,
         marginLeft:
           mouseMoving || sliderMoving ? "0px" : `${task.hallNumber * 20}px`,
-        left: "0",
+        left: left + "px",
         width:
           mouseMoving || sliderMoving
             ? "100%"
             : `calc(80% - ${task.hallNumber * 20}px)`,
         zIndex: mouseMoving || sliderMoving ? 20 : 10,
+        display: mouseUp ? "none" : "block",
       }}
     >
       <div
@@ -65,6 +69,7 @@ const TaskDisplay = ({ task }: { task: StructuredTaskType }) => {
         onMouseDown={(event) => {
           setMouseMoving(true);
           setPrevClientY(event.clientY);
+          setLeftOffset(event.clientX);
         }}
         onMouseLeave={(event) => {
           if (!mouseMoving) return;
@@ -83,56 +88,55 @@ const TaskDisplay = ({ task }: { task: StructuredTaskType }) => {
           if (mouseMoving) {
             const dy = event.clientY - prevClientY;
             setTop(Math.max(task.startTime + dy, 0));
-
-            if (refDrag.current) {
-              const component = refDrag.current.getBoundingClientRect();
-              let cursorX = event.clientX;
-              let left = component.left;
-              let right = component.right;
-              if (cursorX < left) {
-                let newDate = new Date(task.date);
-                newDate.setDate(newDate.getDate() - 1);
-                taskDispatch({
-                  type: "UPDATE_DATE",
-                  payload: {
-                    id: task.id,
-                    newDate: newDate,
-                    oldDate: task.date,
-                    top,
-                  },
-                });
-                setMouseMoving(false);
-              }
-
-              if (cursorX > right) {
-                let newDate = new Date(task.date);
-                newDate.setDate(newDate.getDate() + 1);
-                taskDispatch({
-                  type: "UPDATE_DATE",
-                  payload: {
-                    id: task.id,
-                    newDate: newDate,
-                    oldDate: task.date,
-                    top,
-                  },
-                });
-                setMouseMoving(false);
-              }
-            }
+            console.log(dayNumber);
+            setLeft(
+              Math.min(
+                Math.max(event.clientX - leftOffset, -dayNumber * 128),
+                (6 - dayNumber) * 128
+              )
+            );
           }
         }}
         onMouseUp={() => {
           setMouseMoving(false);
+
           let newTop = Math.floor(top / 15) * 15;
           setTop(newTop);
-          taskDispatch({
-            type: "UPDATE_TIME",
-            payload: {
-              id: task.id,
-              startTime: newTop,
-              endTime: task.endTime - task.startTime + newTop,
-            },
-          });
+          setLeft(0);
+
+          let dateOffset = 0;
+          if (Math.abs(left) > 64) {
+            dateOffset =
+              left < 0
+                ? 0.5 * Math.floor(left / 64)
+                : 0.5 * Math.ceil(left / 64);
+          }
+
+          if (dateOffset !== 0) {
+            let newDate = new Date(task.date);
+
+            newDate.setDate(newDate.getDate() + dateOffset);
+            setMouseUp(true);
+            taskDispatch({
+              type: "UPDATE_DATE",
+              payload: {
+                id: task.id,
+                startTime: newTop,
+                endTime: task.endTime - task.startTime + newTop,
+                oldDate: task.date,
+                newDate: newDate,
+              },
+            });
+          } else {
+            taskDispatch({
+              type: "UPDATE_TIME",
+              payload: {
+                id: task.id,
+                startTime: newTop,
+                endTime: task.endTime - task.startTime + newTop,
+              },
+            });
+          }
         }}
         id="content"
         className="text-xs p-1 outline outline-1 outline-blue-800 relative rounded-md h-full w-full bg-blue-400  shadow-xl text-white"
