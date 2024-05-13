@@ -15,6 +15,7 @@ export type StructuredTaskType = {
   endTime: number;
   id: string;
   hallNumber: number;
+  colour: string;
 };
 
 const DayView = ({
@@ -114,7 +115,11 @@ const DayView = ({
 
         {displayTasks.length > 0 &&
           displayTasks.map((task) => (
-            <TaskDisplay dayNumber={dayNumber} key={task.id} task={task} />
+            <TaskDisplay
+              dayNumber={dayNumber}
+              key={task.id + task.startTime + task.endTime}
+              task={task}
+            />
           ))}
       </div>
     </div>
