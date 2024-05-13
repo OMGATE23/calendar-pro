@@ -64,10 +64,26 @@
 
 @keyframes fadeIn {
   0% {
-    opacity: 0;
+    opacity: 0.5;
   }
 
   100% {
     opacity: 1;
   }
+}
+
+@keyframes fadeUp {
+  0% {
+    opacity: 0;
+    top: 12px;
+  }
+
+  100% {
+    opacity: 1;
+    top: 0px;
+  }
+}
+
+.fade-up {
+  animation: fadeUp 150ms ease-in;
 }

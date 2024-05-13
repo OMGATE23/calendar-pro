@@ -9,6 +9,7 @@ export type Task = {
   startTime: number;
   endTime: number;
   id: string;
+  colour: string;
 };
 
 export type TaskState = {
@@ -30,6 +31,7 @@ export type Action =
         date: Date;
         startTime: number;
         endTime: number;
+        colour: string;
       };
     }
   | {
@@ -54,6 +56,13 @@ export type Action =
         oldDate: Date;
         startTime: number;
         endTime: number;
+      };
+    }
+  | {
+      type: "UPDATE_COLOUR";
+      payload: {
+        id: string;
+        colour: string;
       };
     };
 
@@ -99,6 +108,7 @@ const TaskContextProvider = ({ children }: { children: ReactNode }) => {
           ...task,
           description: task.description || "",
           id: newId,
+          colour: task.colour,
         } as Task);
 
         return {
@@ -156,7 +166,7 @@ const TaskContextProvider = ({ children }: { children: ReactNode }) => {
 
         newTasks.set(id, { ...updatedTask });
         return {
-          ...state,
+          tasksByDate: new Map(state.tasksByDate),
           tasks: newTasks,
         };
       }
@@ -198,6 +208,26 @@ const TaskContextProvider = ({ children }: { children: ReactNode }) => {
         return {
           tasks: newTasks,
           tasksByDate: newTasksByDate,
+        };
+      }
+
+      case "UPDATE_COLOUR": {
+        const { id, colour } = action.payload;
+
+        let newTasks = new Map(state.tasks);
+
+        let colouredTask = newTasks.get(id);
+
+        if (!colouredTask) {
+          return state;
+        }
+
+        colouredTask.colour = colour;
+        newTasks.set(id, { ...colouredTask });
+
+        return {
+          tasks: newTasks,
+          tasksByDate: state.tasksByDate,
         };
       }
 

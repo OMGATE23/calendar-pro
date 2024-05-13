@@ -19,7 +19,7 @@ const TaskDisplay = ({
   const [addedHeight, setAddedHeight] = useState(0);
   const [sliderMoving, setSliderMoving] = useState(false);
   const { taskDispatch } = useTaskContext();
-  const [leftOffset, setLeftOffset] = useState(0);
+  const [prevClientX, setPrevClientX] = useState(0);
   const [left, setLeft] = useState(0);
   const [mouseUp, setMouseUp] = useState(false);
 
@@ -46,7 +46,7 @@ const TaskDisplay = ({
       id={task.id}
       key={task.id}
       ref={ref}
-      className="task-animation resizeable shadow-md  rounded-md"
+      className={`task-animation resizeable shadow-md ${task.colour} rounded-md`}
       style={{
         position: "absolute",
         top: top * (16 / 15) + "px",
@@ -69,9 +69,9 @@ const TaskDisplay = ({
         onMouseDown={(event) => {
           setMouseMoving(true);
           setPrevClientY(event.clientY);
-          setLeftOffset(event.clientX);
+          setPrevClientX(event.clientX);
         }}
-        onMouseLeave={(event) => {
+        onMouseLeave={() => {
           if (!mouseMoving) return;
           let newTop = Math.ceil(top / 15) * 15;
           setTop(newTop);
@@ -88,10 +88,9 @@ const TaskDisplay = ({
           if (mouseMoving) {
             const dy = event.clientY - prevClientY;
             setTop(Math.max(task.startTime + dy, 0));
-            console.log(dayNumber);
             setLeft(
               Math.min(
-                Math.max(event.clientX - leftOffset, -dayNumber * 128),
+                Math.max(event.clientX - prevClientX, -dayNumber * 128),
                 (6 - dayNumber) * 128
               )
             );
@@ -101,8 +100,6 @@ const TaskDisplay = ({
           setMouseMoving(false);
 
           let newTop = Math.floor(top / 15) * 15;
-          setTop(newTop);
-          setLeft(0);
 
           let dateOffset = 0;
           if (Math.abs(left) > 64) {
@@ -137,9 +134,11 @@ const TaskDisplay = ({
               },
             });
           }
+          setTop(newTop);
+          setLeft(0);
         }}
         id="content"
-        className="text-xs p-1 outline outline-1 outline-blue-800 relative rounded-md h-full w-full bg-blue-400  shadow-xl text-white"
+        className="text-xs font-[500] p-1  relative rounded-md h-full w-full  shadow-xl text-white"
       >
         <div className="overflow-hidden select-none h-full">
           <p className="text-clip">{task.title}</p>
@@ -152,7 +151,7 @@ const TaskDisplay = ({
         )}
       </div>
       <div
-        className="resizer-b bg-blue-600 rounded-b-md"
+        className="resizer-b rounded-b-md"
         style={{
           height: "4px",
         }}
