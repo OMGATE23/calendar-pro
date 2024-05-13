@@ -116,7 +116,7 @@ const CreateEventModal = ({
 
           <div className="grid grid-cols-4 justify-items-center gap-4">
             {colourOptions.map((colour) => (
-              <label className={`w-6 h-6 ${colour}  rounded-lg `}>
+              <label key={colour} className={`w-6 h-6 ${colour}  rounded-lg `}>
                 {colour === taskColour && (
                   <span className="text-white h-full flex justify-center items-center">
                     <img
