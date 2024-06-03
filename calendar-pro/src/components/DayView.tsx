@@ -37,20 +37,19 @@ const DayView = ({
   const { state: dateState, dispatch: dateDispatch } = useDateContext();
   const { tasksState } = useTaskContext();
   const [displayTasks, setDisplayTasks] = useState<StructuredTaskType[]>([]);
-  const { tasks, tasksByDate } = tasksState;
+  const { tasks } = tasksState;
 
   function getFormatedTasks() {
-    const today = formatDate(day);
-    let todaysTasks = tasksByDate.get(today) || [];
+    let todaysTasks = tasks
+      .filter((task) => sameDate(task.date, day))
+      .sort((a, b) => a.startTime - b.endTime);
 
     if (todaysTasks.length === 0) {
       return [];
     }
-    let sortedTasks = (todaysTasks.filter(Boolean) as string[])
-      .map((eventId) => tasks.get(eventId) as Task)
-      .sort((a, b) => a.startTime - b.startTime);
+
     let solution = [];
-    for (let task of sortedTasks) {
+    for (let task of todaysTasks) {
       let taskScheduled = false;
       for (let hall of solution) {
         if (hall[hall.length - 1].endTime <= task.startTime) {
@@ -83,7 +82,7 @@ const DayView = ({
   useEffect(() => {
     const structuredTasks = getFormatedTasks();
     setDisplayTasks(structuredTasks || []);
-  }, [tasks, tasksByDate]);
+  }, [tasks]);
   return (
     <div className="min-w-32 outline outline-1 outline-neutral-100">
       <button

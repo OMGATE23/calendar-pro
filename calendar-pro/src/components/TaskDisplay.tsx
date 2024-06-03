@@ -1,7 +1,48 @@
 import { useTaskContext } from "@/context/TaskContext";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useReducer } from "react";
 import { StructuredTaskType } from "./DayView";
 import { numberToTime } from "@/helpers/timefunctions";
+import { TaskDimensions, TypeDimensionAction } from "@/helpers/types";
+
+const initialState: TaskDimensions = {
+  top: 0,
+  left: 0,
+  previousClientY: 0,
+  previousClientX: 0,
+  isMouseMoving: false,
+  sliderY: 0,
+  addedHeight: 0,
+  isSliderMoving: false,
+  isMouseUp: false,
+};
+
+const reducer = (
+  state: TaskDimensions,
+  action: TypeDimensionAction
+): TaskDimensions => {
+  switch (action.type) {
+    case "SET_TOP":
+      return { ...state, top: action.payload };
+    case "SET_LEFT":
+      return { ...state, left: action.payload };
+    case "SET_PREVIOUS_CLIENT_Y":
+      return { ...state, previousClientY: action.payload };
+    case "SET_PREVIOUS_CLIENT_X":
+      return { ...state, previousClientX: action.payload };
+    case "SET_MOUSE_MOVING":
+      return { ...state, isMouseMoving: action.payload };
+    case "SET_SLIDER_Y":
+      return { ...state, sliderY: action.payload };
+    case "SET_ADDED_HEIGHT":
+      return { ...state, addedHeight: action.payload };
+    case "SET_SLIDER_MOVING":
+      return { ...state, isSliderMoving: action.payload };
+    case "SET_MOUSE_UP":
+      return { ...state, isMouseUp: action.payload };
+    default:
+      return state;
+  }
+};
 
 const TaskDisplay = ({
   task,
@@ -12,21 +53,19 @@ const TaskDisplay = ({
 }) => {
   const refDrag = useRef<HTMLDivElement | null>(null);
   const ref = useRef<HTMLDivElement | null>(null);
-  const [top, setTop] = useState(task.startTime);
-  const [prevClientY, setPrevClientY] = useState(0);
-  const [mouseMoving, setMouseMoving] = useState(false);
-  const [sliderY, setSliderY] = useState(0);
-  const [addedHeight, setAddedHeight] = useState(0);
-  const [sliderMoving, setSliderMoving] = useState(false);
+  const [state, dispatch]: [
+    TaskDimensions,
+    React.Dispatch<TypeDimensionAction>
+  ] = useReducer(reducer, {
+    ...initialState,
+    top: task.startTime,
+  });
   const { taskDispatch } = useTaskContext();
-  const [prevClientX, setPrevClientX] = useState(0);
-  const [left, setLeft] = useState(0);
-  const [mouseUp, setMouseUp] = useState(false);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (ref.current && !ref.current.contains(event.target as HTMLElement)) {
-        setMouseMoving(false);
+        dispatch({ type: "SET_MOUSE_MOVING", payload: false });
       }
     };
     document.addEventListener("click", handleClickOutside);
@@ -35,167 +74,169 @@ const TaskDisplay = ({
       document.removeEventListener("click", handleClickOutside);
     };
   }, []);
+
   useEffect(() => {
-    setAddedHeight(0);
+    dispatch({ type: "SET_ADDED_HEIGHT", payload: 0 });
   }, [task.endTime]);
+
+  const handleMouseDown: React.MouseEventHandler<HTMLDivElement> = (event) => {
+    dispatch({ type: "SET_MOUSE_MOVING", payload: true });
+    dispatch({ type: "SET_PREVIOUS_CLIENT_Y", payload: event.clientY });
+    dispatch({ type: "SET_PREVIOUS_CLIENT_X", payload: event.clientX });
+  };
+
+  const handleMouseMove: React.MouseEventHandler<HTMLDivElement> = (event) => {
+    if (state.isMouseMoving) {
+      const dy = event.clientY - state.previousClientY;
+      const dx = event.clientX - state.previousClientX;
+      dispatch({ type: "SET_TOP", payload: Math.max(task.startTime + dy, 0) });
+      dispatch({
+        type: "SET_LEFT",
+        payload: Math.min(
+          Math.max(dx, -dayNumber * 128),
+          (6 - dayNumber) * 128
+        ),
+      });
+    }
+  };
+
+  const handleMouseUp = () => {
+    if (state.left === 0 && state.top === task.startTime) {
+      return;
+    }
+    dispatch({ type: "SET_MOUSE_MOVING", payload: false });
+    let newTop = Math.floor(state.top / 15) * 15;
+    let dateOffset = 0;
+    if (Math.abs(state.left) > 64) {
+      dateOffset =
+        state.left < 0
+          ? 0.5 * Math.floor(state.left / 64)
+          : 0.5 * Math.ceil(state.left / 64);
+    }
+    if (dateOffset !== 0) {
+      let newDate = new Date(task.date);
+      newDate.setDate(newDate.getDate() + dateOffset);
+      dispatch({ type: "SET_MOUSE_UP", payload: true });
+      taskDispatch({
+        type: "UPDATE_DATE",
+        payload: {
+          id: task.id,
+          startTime: newTop,
+          endTime: task.endTime - task.startTime + newTop,
+          oldDate: task.date,
+          newDate: newDate,
+        },
+      });
+    } else {
+      taskDispatch({
+        type: "UPDATE_TIME",
+        payload: {
+          id: task.id,
+          startTime: newTop,
+          endTime: task.endTime - task.startTime + newTop,
+        },
+      });
+    }
+    dispatch({ type: "SET_TOP", payload: newTop });
+    dispatch({ type: "SET_LEFT", payload: 0 });
+  };
+
+  const handleSliderMouseDown: React.MouseEventHandler<HTMLDivElement> = (
+    event
+  ) => {
+    dispatch({ type: "SET_SLIDER_MOVING", payload: true });
+    dispatch({ type: "SET_SLIDER_Y", payload: event.clientY });
+  };
+
+  const handleSliderMouseMove: React.MouseEventHandler<HTMLDivElement> = (
+    event
+  ) => {
+    if (state.isSliderMoving) {
+      const dy = event.clientY - state.sliderY;
+      dispatch({ type: "SET_ADDED_HEIGHT", payload: dy });
+    }
+  };
+
+  const handleSliderMouseUp = () => {
+    let addedMinutes = Math.floor(state.addedHeight / 15) * 15;
+    taskDispatch({
+      type: "UPDATE_TIME",
+      payload: {
+        id: task.id,
+        startTime: task.startTime,
+        endTime: task.endTime + addedMinutes,
+      },
+    });
+    dispatch({ type: "SET_SLIDER_MOVING", payload: false });
+  };
+
+  const handleSliderMouseLeave = () => {
+    if (!state.isSliderMoving) return;
+    let addedMinutes = Math.floor(state.addedHeight / 15) * 15;
+    taskDispatch({
+      type: "UPDATE_TIME",
+      payload: {
+        id: task.id,
+        startTime: task.startTime,
+        endTime: task.endTime + addedMinutes,
+      },
+    });
+    dispatch({ type: "SET_SLIDER_MOVING", payload: false });
+  };
+
   return (
     <div
-      task-date={task.date.getDate()}
-      task-month={task.date.getMonth()}
-      task-year={task.date.getFullYear()}
       id={task.id}
       key={task.id}
       ref={ref}
-      className={`task-animation resizeable shadow-md ${task.colour} rounded-md`}
+      className={`task-animation resizeable ${task.colour} rounded-md`}
       style={{
         position: "absolute",
-        top: top * (16 / 15) + "px",
+        top: state.top * (16 / 15) + "px",
         height: `${
-          ((task.endTime - task.startTime) * 16) / 15 + addedHeight
+          ((task.endTime - task.startTime) * 16) / 15 + state.addedHeight
         }px`,
         marginLeft:
-          mouseMoving || sliderMoving ? "0px" : `${task.hallNumber * 20}px`,
-        left: left + "px",
+          state.isMouseMoving || state.isSliderMoving
+            ? "0px"
+            : `${task.hallNumber * 20}px`,
+        left: state.left + "px",
         width:
-          mouseMoving || sliderMoving
+          state.isMouseMoving || state.isSliderMoving
             ? "100%"
             : `calc(80% - ${task.hallNumber * 20}px)`,
-        zIndex: mouseMoving || sliderMoving ? 20 : 10,
-        display: mouseUp ? "none" : "block",
+        zIndex: state.isMouseMoving || state.isSliderMoving ? 20 : 10,
+        display: state.isMouseUp ? "none" : "block",
       }}
     >
       <div
         ref={refDrag}
-        onMouseDown={(event) => {
-          setMouseMoving(true);
-          setPrevClientY(event.clientY);
-          setPrevClientX(event.clientX);
-        }}
-        onMouseLeave={() => {
-          if (!mouseMoving) return;
-          let newTop = Math.ceil(top / 15) * 15;
-          setTop(newTop);
-          taskDispatch({
-            type: "UPDATE_TIME",
-            payload: {
-              id: task.id,
-              startTime: newTop,
-              endTime: task.endTime - task.startTime + newTop,
-            },
-          });
-        }}
-        onMouseMove={(event) => {
-          if (mouseMoving) {
-            const dy = event.clientY - prevClientY;
-            setTop(Math.max(task.startTime + dy, 0));
-            setLeft(
-              Math.min(
-                Math.max(event.clientX - prevClientX, -dayNumber * 128),
-                (6 - dayNumber) * 128
-              )
-            );
-          }
-        }}
-        onMouseUp={() => {
-          setMouseMoving(false);
-
-          let newTop = Math.floor(top / 15) * 15;
-
-          let dateOffset = 0;
-          if (Math.abs(left) > 64) {
-            dateOffset =
-              left < 0
-                ? 0.5 * Math.floor(left / 64)
-                : 0.5 * Math.ceil(left / 64);
-          }
-
-          if (dateOffset !== 0) {
-            let newDate = new Date(task.date);
-
-            newDate.setDate(newDate.getDate() + dateOffset);
-            setMouseUp(true);
-            taskDispatch({
-              type: "UPDATE_DATE",
-              payload: {
-                id: task.id,
-                startTime: newTop,
-                endTime: task.endTime - task.startTime + newTop,
-                oldDate: task.date,
-                newDate: newDate,
-              },
-            });
-          } else {
-            taskDispatch({
-              type: "UPDATE_TIME",
-              payload: {
-                id: task.id,
-                startTime: newTop,
-                endTime: task.endTime - task.startTime + newTop,
-              },
-            });
-          }
-          setTop(newTop);
-          setLeft(0);
-        }}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
         id="content"
-        className="text-xs font-[500] p-1  relative rounded-md h-full w-full  shadow-xl text-white"
+        className="text-xs font-[500] p-1 relative rounded-md h-full w-full shadow-xl text-white"
       >
-        <div className="overflow-hidden select-none h-full">
+        <div className="overflow-hidden select-none h-full cursor-pointer">
           <p className="text-clip">{task.title}</p>
           <p className="text-clip">
             {numberToTime(task.startTime)} - {numberToTime(task.endTime)}
           </p>
         </div>
-        {mouseMoving && (
+        {state.isMouseMoving && (
           <div className="h-[100vh] w-[300%] translate-y-[-50%] translate-x-[-33%] absolute top-0 left-0"></div>
         )}
       </div>
       <div
         className="resizer-b rounded-b-md"
-        style={{
-          height: "4px",
-        }}
-        onMouseDown={(event) => {
-          setSliderMoving(true);
-          setSliderY(event.clientY);
-        }}
-        onMouseMove={(event) => {
-          if (sliderMoving) {
-            const dy = event.clientY - sliderY;
-            setAddedHeight(dy);
-          }
-        }}
-        onMouseUp={() => {
-          let addedMinutes = Math.floor(addedHeight / 15) * 15;
-
-          taskDispatch({
-            type: "UPDATE_TIME",
-            payload: {
-              id: task.id,
-              startTime: task.startTime,
-              endTime: task.endTime + addedMinutes,
-            },
-          });
-
-          setSliderMoving(false);
-        }}
-        onMouseLeave={() => {
-          if (!sliderMoving) return;
-          let addedMinutes = Math.floor(addedHeight / 15) * 15;
-
-          taskDispatch({
-            type: "UPDATE_TIME",
-            payload: {
-              id: task.id,
-              startTime: task.startTime,
-              endTime: task.endTime + addedMinutes,
-            },
-          });
-          setSliderMoving(false);
-        }}
+        style={{ height: "4px" }}
+        onMouseDown={handleSliderMouseDown}
+        onMouseMove={handleSliderMouseMove}
+        onMouseUp={handleSliderMouseUp}
+        onMouseLeave={handleSliderMouseLeave}
       >
-        {sliderMoving && (
-          <div className="h-[100px] relative translate-y-[-50%] "></div>
+        {state.isSliderMoving && (
+          <div className="h-[100px] relative translate-y-[-50%]"></div>
         )}
       </div>
     </div>
