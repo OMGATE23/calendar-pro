@@ -13,8 +13,7 @@ export type Task = {
 };
 
 export type TaskState = {
-  tasksByDate: Map<string, string[]>;
-  tasks: Map<string, Task>;
+  tasks: Task[];
 };
 
 export type TaskContextType = {
@@ -35,7 +34,7 @@ export type Action =
       };
     }
   | {
-      type: "REMOVE_TASK";
+      type: "DELETE_TASK";
       payload: {
         id: string;
       };
@@ -64,12 +63,23 @@ export type Action =
         id: string;
         colour: string;
       };
+    }
+  | {
+      type: "UPDATE_TASK";
+      payload: {
+        title: string;
+        description?: string;
+        date: Date;
+        startTime: number;
+        endTime: number;
+        id: string;
+        colour: string;
+      };
     };
 
 export const TaskContext = createContext<TaskContextType>({
   tasksState: {
-    tasksByDate: new Map(),
-    tasks: new Map(),
+    tasks: [],
   },
   taskDispatch: () => {},
 });
@@ -79,155 +89,115 @@ export function useTaskContext() {
 }
 const TaskContextProvider = ({ children }: { children: ReactNode }) => {
   const [tasksState, taskDispatch] = useReducer(reducer, {
-    tasks: new Map(),
-    tasksByDate: new Map(),
+    tasks: [],
   });
 
   function reducer(state: TaskState, action: Action): TaskState {
     switch (action.type) {
       case "ADD_TASK": {
         const { payload: task } = action;
-        const { date } = task;
-        const dateString = date
-          .toLocaleDateString("en-GB", {
-            day: "2-digit",
-            month: "2-digit",
-            year: "numeric",
-          })
-          .replace(/\//g, "");
-
-        let newtasksByDate = new Map(state.tasksByDate);
-        let newtasks = new Map(state.tasks);
-        let newId = crypto.randomUUID();
-
-        newtasksByDate.set(
-          dateString,
-          [newId].concat(newtasksByDate.get(dateString) || [])
-        );
-        newtasks.set(newId, {
-          ...task,
-          description: task.description || "",
-          id: newId,
-          colour: task.colour,
-        } as Task);
+        let taskId = crypto.randomUUID();
+        let newtasks = [
+          ...state.tasks,
+          {
+            ...task,
+            description: task.description || "",
+            id: taskId,
+            colour: task.colour,
+          } as Task,
+        ];
 
         return {
-          tasksByDate: newtasksByDate,
           tasks: newtasks,
         };
       }
 
-      case "REMOVE_TASK": {
+      case "DELETE_TASK": {
         const { id: toBeDeletedId } = action.payload;
-        const task = state.tasks.get(toBeDeletedId);
-        if (!task) {
-          return state;
-        }
-        const dateString = task.date
-          .toLocaleDateString("en-GB", {
-            day: "2-digit",
-            month: "2-digit",
-            year: "numeric",
-          })
-          .replace(/\//g, "");
-        let newtasksByDate = new Map(state.tasksByDate);
-        let newtasks = new Map(state.tasks);
-        newtasksByDate.set(dateString, [
-          ...state.tasksByDate.get(dateString)?.filter((id) => {
-            id !== toBeDeletedId;
-          })!,
-        ]);
-        newtasks.delete(toBeDeletedId);
+
+        let newtasks = [...state.tasks];
+
+        newtasks = newtasks.filter((task) => task.id !== toBeDeletedId);
 
         return {
-          tasksByDate: newtasksByDate,
           tasks: newtasks,
         };
       }
 
       case "UPDATE_TIME": {
         const { id, startTime, endTime } = action.payload;
-        const newTasks = new Map(state.tasks);
-        let updatedTask = newTasks.get(id);
-        if (!updatedTask) {
-          return state;
-        }
-        updatedTask.startTime = startTime;
-        updatedTask.endTime = endTime;
+        let newTasks = [...state.tasks];
 
-        if (endTime <= startTime) {
-          updatedTask.endTime = updatedTask.startTime + 15;
-        }
-        let timeDiff = endTime - startTime;
-        if (updatedTask.endTime > 1440) {
-          updatedTask.endTime = 1440;
-          updatedTask.startTime = 1440 - timeDiff;
-        }
+        newTasks = newTasks.map((task) => {
+          if (task.id === id) {
+            task.startTime = startTime;
+            task.endTime = endTime;
 
-        newTasks.set(id, { ...updatedTask });
+            if (endTime <= startTime) {
+              task.endTime = task.startTime + 15;
+            }
+            let timeDiff = endTime - startTime;
+            if (task.endTime > 1440) {
+              task.endTime = 1440;
+              task.startTime = 1440 - timeDiff;
+            }
+          }
+          return task;
+        });
+
         return {
-          tasksByDate: new Map(state.tasksByDate),
           tasks: newTasks,
         };
       }
       case "UPDATE_DATE": {
-        const { id, newDate, oldDate, startTime, endTime } = action.payload;
+        const { id, newDate, startTime, endTime } = action.payload;
 
-        const newTasks = new Map(state.tasks);
-        const newTasksByDate = new Map(state.tasksByDate);
+        let newTasks = [...state.tasks];
 
-        const taskToUpdate = newTasks.get(id);
-        if (!taskToUpdate) {
-          return state;
-        }
+        newTasks = newTasks.map((task) => {
+          if (task.id === id) {
+            task.date = newDate;
+            task.startTime = startTime;
+            task.endTime = endTime;
 
-        const oldDateKey = formatDate(oldDate);
-        const oldDateTasks = newTasksByDate.get(oldDateKey) || [];
-        const updatedOldDateTasks = oldDateTasks.filter(
-          (taskId) => taskId !== id
-        );
-        if (updatedOldDateTasks.length === 0) {
-          newTasksByDate.delete(oldDateKey);
-        } else {
-          newTasksByDate.set(oldDateKey, updatedOldDateTasks);
-        }
-
-        taskToUpdate.date = newDate;
-        taskToUpdate.startTime = startTime;
-        taskToUpdate.endTime = endTime;
-
-        if (taskToUpdate.endTime > 1440) {
-          taskToUpdate.endTime = 1440;
-          taskToUpdate.startTime = 1440 - (startTime - endTime);
-        }
-        const newDateKey = formatDate(newDate);
-        const newDateTasks = newTasksByDate.get(newDateKey) || [];
-        newTasksByDate.set(newDateKey, [...newDateTasks, id]);
-        newTasks.set(id, taskToUpdate);
+            if (task.endTime > 1440) {
+              task.endTime = 1440;
+              task.startTime = 1440 - (startTime - endTime);
+            }
+          }
+          return task;
+        });
 
         return {
           tasks: newTasks,
-          tasksByDate: newTasksByDate,
         };
       }
 
-      case "UPDATE_COLOUR": {
-        const { id, colour } = action.payload;
+      case "UPDATE_TASK": {
+        const { id, date, startTime, endTime, title, description, colour } =
+          action.payload;
 
-        let newTasks = new Map(state.tasks);
+        let newTasks = [...state.tasks];
 
-        let colouredTask = newTasks.get(id);
+        newTasks = newTasks.map((task) => {
+          if (task.id === id) {
+            task.title = title;
+            task.colour = colour;
+            task.description = description || "";
+            task.date = date;
+            task.startTime = startTime;
+            task.endTime = endTime;
 
-        if (!colouredTask) {
-          return state;
-        }
-
-        colouredTask.colour = colour;
-        newTasks.set(id, { ...colouredTask });
+            if (task.endTime > 1440) {
+              task.endTime = 1440;
+              task.startTime = 1440 - (startTime - endTime);
+            }
+          }
+          return task;
+        });
 
         return {
           tasks: newTasks,
-          tasksByDate: state.tasksByDate,
         };
       }
 
