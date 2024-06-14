@@ -62,7 +62,7 @@ export default function Calendar() {
     return year1 === year2 && month1 === month2 && day1 === day2;
   }
   return (
-    <div className="h-fit w-fit flex flex-col items-center gap-2 ">
+    <div className="h-fit w-fit border border-neutral-200 p-2 rounded-sm flex flex-col items-center gap-2 ">
       <div className="flex items-center justify-between w-full pl-2">
         <h1
           onClick={() => {
@@ -105,7 +105,7 @@ export default function Calendar() {
             className={`day ${
               !isSameMonth(date) && "text-gray-400"
             } mx-auto items-center justify-items-center  rounded-md w-6 h-6  justify-center ${
-              areDatesEqual(date, selectedDate)
+              areDatesEqual(date, new Date(Date.now()))
                 ? "bg-black text-white  hover:bg-black"
                 : "hover:bg-gray-100"
             }`}

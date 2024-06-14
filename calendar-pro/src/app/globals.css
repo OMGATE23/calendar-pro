@@ -87,3 +87,28 @@
 .fade-up {
   animation: fadeUp 150ms ease-in;
 }
+
+.pop-in {
+  animation: popIn 200ms ease-in-out;
+}
+
+@keyframes popIn {
+  0% {
+    opacity: 0;
+    scale: 0.5;
+  }
+
+  80% {
+    opacity: 0.8;
+    scale: 1.02
+  }
+
+  100% {
+    opacity: 1;
+    scale: 1
+  }
+}
+
+.grid-auto-rows {
+  grid-auto-rows: 1fr;
+}

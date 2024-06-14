@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import DateContextProvider from "@/context/DateContext";
 import TaskContextProvider from "@/context/TaskContext";
+import ViewContextProvider from "@/context/ViewContext";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -21,11 +22,13 @@ export default function RootLayout({
       <head>
         <title>CalendarPro</title>
       </head>
-      <DateContextProvider>
-        <TaskContextProvider>
-          <body className={inter.className}>{children}</body>
-        </TaskContextProvider>
-      </DateContextProvider>
+      <ViewContextProvider>
+        <DateContextProvider>
+          <TaskContextProvider>
+            <body className={inter.className}>{children}</body>
+          </TaskContextProvider>
+        </DateContextProvider>
+      </ViewContextProvider>
     </html>
   );
 }
