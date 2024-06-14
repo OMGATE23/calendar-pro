@@ -60,6 +60,7 @@ const MonthView = () => {
       <div className="border-[0.5px] h-full text-xs border-neutral-200 grid grid-cols-7 grid-auto-rows justify-center  items-center">
         {daysInMonth.map((day, index) => (
           <div
+            key={day.getDate() + " " + day.getMonth() + day.getFullYear()}
             onClick={() => {
               setShowDayInfo({ show: true, day: day });
             }}
