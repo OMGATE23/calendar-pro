@@ -1,5 +1,5 @@
 import { useDateContext } from "@/context/DateContext";
-import { formatDate, sameDate } from "@/helpers/timefunctions";
+import { sameDate } from "@/helpers/timefunctions";
 import React, { useEffect, useState } from "react";
 import TimeBox from "./TimeBox";
 import { Task, useTaskContext } from "@/context/TaskContext";
@@ -84,7 +84,7 @@ const DayView = ({
     setDisplayTasks(structuredTasks || []);
   }, [tasks]);
   return (
-    <div className="min-w-32 outline outline-1 outline-neutral-100">
+    <div className="min-w-32 relative border border-neutral-100">
       <button
         onClick={() => {
           dateDispatch({
@@ -95,8 +95,10 @@ const DayView = ({
           });
         }}
         className={`${
-          sameDate(day, dateState.selectedDate) && "bg-neutral-950 text-white"
-        } w-full select-none px-4 py-1 h-16 rounded-md flex flex-col items-center justify-center text-center`}
+          sameDate(day, dateState.selectedDate)
+            ? "bg-neutral-950 text-white"
+            : "bg-white"
+        } w-full sticky top-0 z-[9999999999]  border-neutral-100 select-none px-4 py-1 h-16 rounded-md flex flex-col items-center justify-center text-center`}
       >
         {day.getDate()}
         <span>{MONTHS[day.getMonth()]}</span>

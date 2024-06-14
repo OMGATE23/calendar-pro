@@ -1,21 +1,17 @@
-"use client";
 import Calendar from "@/components/Calendar";
-import WeekGrid from "@/components/WeekGrid";
-import { useDateContext } from "@/context/DateContext";
-import { useState } from "react";
-
-type CreateTaskType = {
-  start: number;
-  taskDate: Date;
-};
+import DisplayView from "@/components/DisplayView";
+import Header from "@/components/Header";
 
 export default function Home() {
   return (
-    <main className="relative font-[300] flex flex-col md:flex-row items-center md:items-start p-4 gap-4">
-      <div className="flex flex-col gap-8 justify-center items-center">
-        <Calendar />
-      </div>
-      <WeekGrid />
-    </main>
+    <div className="h-[100dvh]">
+      <Header />
+      <main className="relative h-full font-[300] flex flex-col md:flex-row items-center md:items-start justify-stretch p-4 gap-4">
+        <div className="flex flex-col gap-8 justify-center items-center">
+          <Calendar />
+        </div>
+        <DisplayView />
+      </main>
+    </div>
   );
 }

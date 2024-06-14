@@ -1,5 +1,5 @@
 import React, { ChangeEventHandler, useEffect, useState } from "react";
-import { CreateTaskType } from "./WeekGrid";
+import { CreateTaskType } from "./day-components/WeekGrid";
 import DropdownTime from "./DropdownTime";
 import { useTaskContext } from "@/context/TaskContext";
 import { colourOptions } from "@/helpers/constansts";
