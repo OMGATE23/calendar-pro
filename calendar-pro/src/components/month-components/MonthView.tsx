@@ -52,7 +52,10 @@ const MonthView = () => {
     <div className="h-[90%]">
       <div className=" text-xs p-2 mb-2 grid grid-cols-7 justify-center  items-center">
         {weekDays.map((day) => (
-          <div className="uppercase text-neutral-700 justify-self-center">
+          <div
+            key={day}
+            className="uppercase text-neutral-700 justify-self-center"
+          >
             {day}
           </div>
         ))}
